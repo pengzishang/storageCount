@@ -57,37 +57,55 @@ class DBSharedInstance {
     var time = DateTime.now().millisecondsSinceEpoch.toString();
 
     db.transaction((trx) {
-      db.insert("Total",
-          {"timeStampId": time, "updateTime": time, "totalCount": to - from + 1});
+      db.insert("Total", {
+        "timeStampId": time,
+        "updateTime": time,
+        "totalCount": to - from + 1
+      });
       List.generate(to - from + 1, (index) {
         return from + index;
       }).forEach((numId) {
-        db.insert("EntryDetail", {"createTimeStamp": time,"updateTimeStamp":time, "numId": numId});
+        db.insert("EntryDetail",
+            {"createTimeStamp": time, "updateTimeStamp": time, "numId": numId});
       });
     });
 
     return db;
   }
 
-  Future closeDB() async{
+  Future closeDB() async {
     final db = await _dbFile;
     return db.close();
   }
 
   Future<List<TotalData>> getTotalDataList() async {
     final db = await _dbFile;
-    List list = await db.query("Total",orderBy: "timeStampId");
+    List list = await db.query("Total", orderBy: "timeStampId");
 
-    List<TotalData> totalLists =  list.map((item){
-      return TotalData(item["timeStampId"], item["updateTime"], item["totalCount"], item["damagedCount"], item["deliverCount"]);
+    List<TotalData> totalLists = list.map((item) {
+      return TotalData(item["timeStampId"], item["updateTime"],
+          item["totalCount"], item["damagedCount"], item["deliverCount"]);
     }).toList();
 
     return totalLists;
   }
 
-Future<List<EntryData>> getEntryData(DateTime createTime) async {
-  final db = await _dbFile;
-  List list = await db.query("EntryDetail");
-}
-
+  Future<List<EntryData>> getEntryData(DateTime createTime) async {
+    final db = await _dbFile;
+    List list = await db.query("EntryDetail",
+        columns: [
+          "entryId",
+          "updateTimeStamp",
+          "createTimeStamp",
+          "numId",
+          "isPacked",
+          "isDamaged",
+          "unknown"
+        ],
+        where: "createTimeStamp = ?",
+        whereArgs: [createTime.millisecondsSinceEpoch]);
+        return list.map((value){
+          return EntryData(value["entryId"], value["numId"], value["updateTimeStamp"], value["createTimeStamp"], value["isPacked"], value["isDamaged"], value["unknown"]);
+        }).toList();
+  }
 }

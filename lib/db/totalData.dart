@@ -22,12 +22,12 @@ class EntryData {
   DateTime updateTime, createTime;
   bool isPacked, isDamaged, unknown;
 
-  EntryData(int entryId, numId, updateTimeStamp, createTimeStamp, isPacked,
+  EntryData(this.entryId, this.numId, updateTimeStamp, createTimeStamp, isPacked,
       isDamaged, unknown) {
     this.updateTime = DateTime.fromMillisecondsSinceEpoch(updateTimeStamp);
     this.createTime = DateTime.fromMillisecondsSinceEpoch(createTimeStamp);
     this.isPacked = isPacked > 0;
     this.isDamaged = isDamaged > 0;
-    this.unknown = unknown > 0;
+    this.unknown = unknown ?? 0 > 0;
   }
 }
