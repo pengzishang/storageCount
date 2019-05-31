@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/material.dart';
 import 'detail/mainDetailController.dart';
 import 'package:storage_count/db/db.dart';
 import 'db/totalData.dart';
 import 'dart:async';
+import 'package:scoped_model/scoped_model.dart';
 
 void main() => runApp(MyApp());
 
@@ -21,44 +21,58 @@ class MyApp extends StatelessWidget {
 
 class MainHome extends StatelessWidget {
   final _scaffoldKey = GlobalKey<ScaffoldState>();
-
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('所有项目'),
+    return ScopedModel(
+      model: MainModel(),
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text('所有项目'),
+        ),
+        key: _scaffoldKey,
+        floatingActionButton: FloatingActionBTN(),
+        body: TotalListView(),
       ),
-      key: _scaffoldKey,
-      floatingActionButton: Builder(builder: (BuildContext context) {
-        return FloatingActionButton(
-          onPressed: () async {
-            showDialog(
-                    context: context,
-                    builder: (BuildContext context) => InputDialog())
-                .then((onValue) {
-              if (onValue != null) {
-                Scaffold.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Adding'),
-                  ),
-                );
-
-                DBSharedInstance dbs = DBSharedInstance();
-                dbs
-                    .createNewList(
-                        int.tryParse(onValue.first), int.tryParse(onValue.last))
-                    .then((onValue) {
-                  Scaffold.of(context)
-                      .hideCurrentSnackBar(reason: SnackBarClosedReason.hide);
-                });
-              }
-            });
-          },
-          child: Icon(Icons.add),
-        );
-      }),
-      body: TotalListView(),
     );
+  }
+}
+
+class FloatingActionBTN extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return ScopedModelDescendant<MainModel>(
+        rebuildOnChange: false,
+        builder: (BuildContext context, Widget child, MainModel model) {
+          return FloatingActionButton(
+            onPressed: () async {
+              showDialog(
+                      context: context,
+                      builder: (BuildContext context) => InputDialog())
+                  .then((onValue) {
+                if (onValue != null) {
+                  Scaffold.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Adding'),
+                    ),
+                  );
+
+                  DBSharedInstance dbs = DBSharedInstance();
+                  dbs
+                      .createNewList(int.tryParse(onValue.first),
+                          int.tryParse(onValue.last))
+                      .then((onValue) {
+                    dbs.getTotalDataList("timeStampId",true).then((onValue) {
+                      model.totalDataList = onValue;
+                    });
+                    // Scaffold.of(context)
+                    //     .hideCurrentSnackBar(reason: SnackBarClosedReason.hide);
+                  });
+                }
+              });
+            },
+            child: Icon(Icons.add),
+          );
+        });
   }
 }
 
@@ -68,130 +82,107 @@ class TotalListView extends StatefulWidget {
 }
 
 class _TotalListViewState extends State<TotalListView> {
-  List<TotalData> _totalDataList = [];
   int _sortColumnIndex = 0;
-
-  @override
-  initState() {
-    super.initState();
-    DBSharedInstance dbs = DBSharedInstance();
-
-    dbs.getTotalDataList().then((onValue) {
-      setState(() {
-        _totalDataList = onValue;
-      });
-    });
-  }
-
+  String orderBy = "timeStampId";
   @override
   Widget build(BuildContext context) {
-    return ListView(
-      padding: EdgeInsets.all(10),
-      children: [
-        DataTable(
-          sortColumnIndex: _sortColumnIndex,
-          sortAscending: true,
-          columns: [
-            DataColumn(
-              onSort: (index, ac) {
-                setState(() {
-                  _sortColumnIndex = index;
-                  _totalDataList.sort((a, b) {
-                    final c = a;
-                    a = b;
-                    b = c;
-                    return a.timeId.millisecondsSinceEpoch
-                        .compareTo(b.timeId.millisecondsSinceEpoch);
-                  });
-                });
-              },
-              label: Text(
-                '更新时间',
-                textAlign: TextAlign.center,
-              ),
-            ),
-            DataColumn(
-              onSort: (index, ac) {
-                setState(() {
-                  _sortColumnIndex = index;
-                  _totalDataList.sort((a, b) {
-                    final c = a;
-                    a = b;
-                    b = c;
-                    return a.totalCount.compareTo(b.totalCount);
-                  });
-                });
-              },
-              label: Container(
-                  child: Text(
-                '总计',
-                textAlign: TextAlign.center,
-              )),
-            ),
-            DataColumn(
-              onSort: (index, ac) {
-                setState(() {
-                  _sortColumnIndex = index;
-                  _totalDataList.sort((a, b) {
-                    final c = a;
-                    a = b;
-                    b = c;
-                    return a.deliverCount.compareTo(b.deliverCount);
-                  });
-                });
-              },
-              label: Text(
-                '已发货',
-                textAlign: TextAlign.center,
-              ),
-            ),
-            DataColumn(
-              onSort: (index, ac) {
-                setState(() {
-                  _sortColumnIndex = index;
-                  _totalDataList.sort((a, b) {
-                    final c = a;
-                    a = b;
-                    b = c;
-                    return a.damagedCount.compareTo(b.damagedCount);
-                  });
-                });
-              },
-              label: Text(
-                '损坏数',
-                textAlign: TextAlign.center,
-              ),
-            ),
-          ],
-          rows: _totalDataList.map((TotalData value) {
-            return DataRow(
-              cells: [
-                DataCell(Text(
-                  value.timeId.toString(),
-                  textAlign: TextAlign.center,
-                ),onTap: (){
-                  Navigator.push(context, MaterialPageRoute(builder: (context){
-                    return DetailHome(value);
-                  }));
-                }),
-                DataCell(Text(
-                  value.totalCount.toString(),
-                  textAlign: TextAlign.center,
-                )),
-                DataCell(Text(
-                  value.deliverCount.toString(),
-                  textAlign: TextAlign.center,
-                )),
-                DataCell(Text(
-                  value.damagedCount.toString(),
-                  textAlign: TextAlign.center,
-                )),
+    return ScopedModelDescendant<MainModel>(
+      rebuildOnChange: true,
+      builder: (BuildContext context, Widget child, MainModel model) {
+        model.getTotalDataList(orderBy,true);
+        return ListView(
+          padding: EdgeInsets.all(10),
+          children: [
+            DataTable(
+              sortColumnIndex: _sortColumnIndex,
+              sortAscending: true,
+              columns: [
+                DataColumn(
+                  onSort: (index, ac) {
+                    setState(()  {
+                      _sortColumnIndex = index;
+                      orderBy = "timeStampId";
+                      model.notifyListeners();
+                    });
+                  },
+                  label: Text(
+                    '更新时间',
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                DataColumn(
+                  onSort: (index, ac) {
+                    setState(()  {
+                      _sortColumnIndex = index;
+                      orderBy = "totalCount";
+                      model.notifyListeners();
+                    });
+                  },
+                  label: Container(
+                      child: Text(
+                    '总计',
+                    textAlign: TextAlign.center,
+                  )),
+                ),
+                DataColumn(
+                  onSort: (index, ac) {
+                    setState(()  {
+                      _sortColumnIndex = index;
+                      orderBy = "damagedCount";
+                      model.notifyListeners();
+                    });
+                  },
+                  label: Text(
+                    '已发货',
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                DataColumn(
+                  onSort: (index, ac) {
+                    setState(()  {
+                      _sortColumnIndex = index;
+                      orderBy = "deliverCount";
+                      model.notifyListeners();
+                    });
+                  },
+                  label: Text(
+                    '损坏数',
+                    textAlign: TextAlign.center,
+                  ),
+                ),
               ],
-              
-            );
-          }).toList(),
-        )
-      ],
+              rows: model.totalDataList.map((value) {
+                return DataRow(
+                  cells: [
+                    DataCell(
+                        Text(
+                          value.timeId.toString(),
+                          textAlign: TextAlign.center,
+                        ), onTap: () {
+                      Navigator.push(context,
+                          MaterialPageRoute(builder: (context) {
+                        return DetailHome(value);
+                      }));
+                    }),
+                    DataCell(Text(
+                      value.totalCount.toString(),
+                      textAlign: TextAlign.center,
+                    )),
+                    DataCell(Text(
+                      value.deliverCount.toString(),
+                      textAlign: TextAlign.center,
+                    )),
+                    DataCell(Text(
+                      value.damagedCount.toString(),
+                      textAlign: TextAlign.center,
+                    )),
+                  ],
+                );
+              }).toList(),
+            )
+          ],
+        );
+      },
     );
   }
 }
@@ -296,5 +287,22 @@ class _InputDialogState extends State<InputDialog> {
         )),
       ],
     );
+  }
+}
+
+class MainModel extends Model {
+  List<TotalData> _totalDataList = [];
+  List<TotalData> get totalDataList {
+    return _totalDataList;
+  }
+
+  Future getTotalDataList(String orderBy,bool ascending) async {
+    DBSharedInstance dbs = DBSharedInstance();
+    totalDataList = await dbs.getTotalDataList(orderBy,ascending);
+  }
+
+  set totalDataList(List<TotalData> list) {
+    _totalDataList = list;
+    notifyListeners();
   }
 }

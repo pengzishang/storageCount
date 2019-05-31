@@ -44,7 +44,7 @@ class DBSharedInstance {
         await db.execute(
             "CREATE TABLE IF NOT EXISTS \"Total\" (\"timeStampId\" integer PRIMARY KEY NOT NULL,\"updateTime\" integer,\"totalCount\" integer NOT NULL DEFAULT(0),\"damagedCount\" integer NOT NULL DEFAULT(0),\"deliverCount\" integer NOT NULL DEFAULT(0));");
         await db.execute(
-            "CREATE TABLE IF NOT EXISTS \"EntryDetail\" (\"entryId\" integer PRIMARY KEY AUTOINCREMENT NOT NULL,\"updateTimeStamp\" integer NOT NULL,\"createTimeStamp\" integer NOT NULL,\"numId\" integer NOT NULL,\"isPacked\" integer NOT NULL DEFAULT(0),\"isDamaged\" integer NOT NULL DEFAULT(0),\"unknown\" integer);");
+            "CREATE TABLE IF NOT EXISTS \"EntryDetail\" (\"entryId\" integer PRIMARY KEY AUTOINCREMENT NOT NULL,\"updateTimeStamp\" integer NOT NULL,\"createTimeStamp\" integer NOT NULL,\"numId\" integer NOT NULL,\"isPacked\" integer NOT NULL DEFAULT(0),\"isDamaged\" integer NOT NULL DEFAULT(0),\"unknown\" integer) NOT NULL DEFAULT(0);");
         await db.execute(
             "CREATE TABLE IF NOT EXISTS \"ActionDetail\" (\"actionTimeId\" integer PRIMARY KEY NOT NULL,\"numId\" integer NOT NULL,\"content\" text,\"entryId\" integer NOT NULL);");
       });
@@ -78,15 +78,17 @@ class DBSharedInstance {
     return db.close();
   }
 
-  Future<List<TotalData>> getTotalDataList() async {
+  Future<List<TotalData>> getTotalDataList(String orderBy,bool ascending) async {
     final db = await _dbFile;
-    List list = await db.query("Total", orderBy: "timeStampId");
+    List list = await db.query("Total", orderBy: orderBy);
 
     List<TotalData> totalLists = list.map((item) {
       return TotalData(item["timeStampId"], item["updateTime"],
           item["totalCount"], item["damagedCount"], item["deliverCount"]);
     }).toList();
-
+    if (ascending) {
+      totalLists = totalLists.reversed.toList();
+    }
     return totalLists;
   }
 
