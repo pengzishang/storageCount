@@ -1,4 +1,6 @@
-class TotalData {
+import 'package:equatable/equatable.dart';
+
+class TotalData extends Equatable {
   DateTime timeId;
   DateTime updateTime;
   int totalCount;
@@ -11,23 +13,33 @@ class TotalData {
     this.totalCount,
     this.damagedCount,
     this.deliverCount,
-  ) {
+  ) : super([timeId, updateTime, totalCount, damagedCount, deliverCount]) {
     this.timeId = DateTime.fromMillisecondsSinceEpoch(timeId);
     this.updateTime = DateTime.fromMillisecondsSinceEpoch(updateTime);
   }
 }
 
-class EntryData {
+class EntryData extends Equatable {
   int entryId, numId;
-  DateTime updateTime, createTime;
+  DateTime updateTime;
+  DateTime createTime;
   bool isPacked, isDamaged, unknown;
 
-  EntryData(this.entryId, this.numId, updateTimeStamp, createTimeStamp, isPacked,
-      isDamaged, unknown) {
-    this.updateTime = DateTime.fromMillisecondsSinceEpoch(updateTimeStamp);
-    this.createTime = DateTime.fromMillisecondsSinceEpoch(createTimeStamp);
+  EntryData(this.entryId, this.numId, updateTime, createTime,
+      isPacked, isDamaged, unknown)
+      : super([
+          entryId,
+          updateTime,
+          createTime,
+          numId,
+          isPacked,
+          isDamaged,
+          unknown
+        ]) {
+    this.updateTime = DateTime.fromMillisecondsSinceEpoch(updateTime);
+    this.createTime = DateTime.fromMillisecondsSinceEpoch(createTime);
     this.isPacked = isPacked > 0;
     this.isDamaged = isDamaged > 0;
-    this.unknown = unknown ?? 0 > 0;
+    this.unknown = unknown > 0;
   }
 }

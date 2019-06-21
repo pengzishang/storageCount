@@ -29,7 +29,6 @@ class DBSharedInstance {
     Directory documentsDirectory = await getApplicationDocumentsDirectory();
     print(documentsDirectory.absolute);
     String path = Path.join(documentsDirectory.path, "db.db");
-    print(path);
     return path;
   }
 
@@ -44,7 +43,7 @@ class DBSharedInstance {
         await db.execute(
             "CREATE TABLE IF NOT EXISTS \"Total\" (\"timeStampId\" integer PRIMARY KEY NOT NULL,\"updateTime\" integer,\"totalCount\" integer NOT NULL DEFAULT(0),\"damagedCount\" integer NOT NULL DEFAULT(0),\"deliverCount\" integer NOT NULL DEFAULT(0));");
         await db.execute(
-            "CREATE TABLE IF NOT EXISTS \"EntryDetail\" (\"entryId\" integer PRIMARY KEY AUTOINCREMENT NOT NULL,\"updateTimeStamp\" integer NOT NULL,\"createTimeStamp\" integer NOT NULL,\"numId\" integer NOT NULL,\"isPacked\" integer NOT NULL DEFAULT(0),\"isDamaged\" integer NOT NULL DEFAULT(0),\"unknown\" integer) NOT NULL DEFAULT(0);");
+            "CREATE TABLE IF NOT EXISTS \"EntryDetail\" (\"entryId\" integer PRIMARY KEY AUTOINCREMENT NOT NULL,\"updateTimeStamp\" integer NOT NULL,\"createTimeStamp\" integer NOT NULL,\"numId\" integer NOT NULL,\"isPacked\" integer NOT NULL DEFAULT(0),\"isDamaged\" integer NOT NULL DEFAULT(0),\"unknown\" integer NOT NULL DEFAULT(0))");
         await db.execute(
             "CREATE TABLE IF NOT EXISTS \"ActionDetail\" (\"actionTimeId\" integer PRIMARY KEY NOT NULL,\"numId\" integer NOT NULL,\"content\" text,\"entryId\" integer NOT NULL);");
       });
@@ -78,21 +77,18 @@ class DBSharedInstance {
     return db.close();
   }
 
-  Future<List<TotalData>> getTotalDataList(String orderBy,bool ascending) async {
+  Future<List<TotalData>> getTotalDataList(String orderBy) async {
     final db = await _dbFile;
     List list = await db.query("Total", orderBy: orderBy);
 
     List<TotalData> totalLists = list.map((item) {
       return TotalData(item["timeStampId"], item["updateTime"],
           item["totalCount"], item["damagedCount"], item["deliverCount"]);
-    }).toList();
-    if (ascending) {
-      totalLists = totalLists.reversed.toList();
-    }
+    }).toList().reversed.toList();
     return totalLists;
   }
 
-  Future<List<EntryData>> getEntryData(DateTime createTime) async {
+  Future<List<EntryData>> getEntryData(String orderBy,DateTime createTime) async {
     final db = await _dbFile;
     List list = await db.query("EntryDetail",
         columns: [
@@ -105,9 +101,9 @@ class DBSharedInstance {
           "unknown"
         ],
         where: "createTimeStamp = ?",
-        whereArgs: [createTime.millisecondsSinceEpoch]);
+        whereArgs: [createTime.millisecondsSinceEpoch],orderBy: orderBy);
         return list.map((value){
           return EntryData(value["entryId"], value["numId"], value["updateTimeStamp"], value["createTimeStamp"], value["isPacked"], value["isDamaged"], value["unknown"]);
-        }).toList();
+        }).toList().reversed.toList();
   }
 }

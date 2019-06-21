@@ -26,6 +26,7 @@ dependencies:
   path_provider: ^1.1.0
   sqflite: ">=0.8.5"
   scoped_model: ">=0.3.0"
+  equatable: ^0.2.6
 
 dev_dependencies:
   flutter_test:

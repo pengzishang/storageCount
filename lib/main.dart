@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'detail/mainDetailController.dart';
 import 'package:storage_count/db/db.dart';
@@ -61,7 +62,7 @@ class FloatingActionBTN extends StatelessWidget {
                       .createNewList(int.tryParse(onValue.first),
                           int.tryParse(onValue.last))
                       .then((onValue) {
-                    dbs.getTotalDataList("timeStampId",true).then((onValue) {
+                    dbs.getTotalDataList("timeStampId").then((onValue) {
                       model.totalDataList = onValue;
                     });
                     // Scaffold.of(context)
@@ -89,7 +90,7 @@ class _TotalListViewState extends State<TotalListView> {
     return ScopedModelDescendant<MainModel>(
       rebuildOnChange: true,
       builder: (BuildContext context, Widget child, MainModel model) {
-        model.getTotalDataList(orderBy,true);
+        model.getTotalDataList(orderBy);
         return ListView(
           padding: EdgeInsets.all(10),
           children: [
@@ -99,7 +100,7 @@ class _TotalListViewState extends State<TotalListView> {
               columns: [
                 DataColumn(
                   onSort: (index, ac) {
-                    setState(()  {
+                    setState(() {
                       _sortColumnIndex = index;
                       orderBy = "timeStampId";
                       model.notifyListeners();
@@ -112,7 +113,7 @@ class _TotalListViewState extends State<TotalListView> {
                 ),
                 DataColumn(
                   onSort: (index, ac) {
-                    setState(()  {
+                    setState(() {
                       _sortColumnIndex = index;
                       orderBy = "totalCount";
                       model.notifyListeners();
@@ -126,7 +127,7 @@ class _TotalListViewState extends State<TotalListView> {
                 ),
                 DataColumn(
                   onSort: (index, ac) {
-                    setState(()  {
+                    setState(() {
                       _sortColumnIndex = index;
                       orderBy = "damagedCount";
                       model.notifyListeners();
@@ -139,7 +140,7 @@ class _TotalListViewState extends State<TotalListView> {
                 ),
                 DataColumn(
                   onSort: (index, ac) {
-                    setState(()  {
+                    setState(() {
                       _sortColumnIndex = index;
                       orderBy = "deliverCount";
                       model.notifyListeners();
@@ -296,13 +297,28 @@ class MainModel extends Model {
     return _totalDataList;
   }
 
-  Future getTotalDataList(String orderBy,bool ascending) async {
+  Future getTotalDataList(String orderBy) async {
     DBSharedInstance dbs = DBSharedInstance();
-    totalDataList = await dbs.getTotalDataList(orderBy,ascending);
+    totalDataList = await dbs.getTotalDataList(orderBy);
   }
 
   set totalDataList(List<TotalData> list) {
-    _totalDataList = list;
-    notifyListeners();
+    bool isEqual = true;
+    if (_totalDataList.length > 0) {
+      _totalDataList.forEach((itemTotal) {
+        int i = _totalDataList.indexOf(itemTotal);
+        if (list[i] != itemTotal) {
+          isEqual = false;
+        }
+      });
+    } else {
+      isEqual = false;
+    }
+
+    print(isEqual);
+    if (isEqual == false) {
+      _totalDataList = list;
+      notifyListeners();
+    }
   }
 }
