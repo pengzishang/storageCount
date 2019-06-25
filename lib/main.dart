@@ -84,7 +84,7 @@ class TotalListView extends StatefulWidget {
 
 class _TotalListViewState extends State<TotalListView> {
   int _sortColumnIndex = 0;
-  String orderBy = "timeStampId";
+  String orderBy = "updateTime";
   @override
   Widget build(BuildContext context) {
     return ScopedModelDescendant<MainModel>(
@@ -102,7 +102,7 @@ class _TotalListViewState extends State<TotalListView> {
                   onSort: (index, ac) {
                     setState(() {
                       _sortColumnIndex = index;
-                      orderBy = "timeStampId";
+                      orderBy = "updateTime";
                       model.notifyListeners();
                     });
                   },
@@ -157,7 +157,7 @@ class _TotalListViewState extends State<TotalListView> {
                   cells: [
                     DataCell(
                         Text(
-                          value.timeId.toString(),
+                          value.updateTime.toString(),
                           textAlign: TextAlign.center,
                         ), onTap: () {
                       Navigator.push(context,
@@ -304,14 +304,17 @@ class MainModel extends Model {
 
   set totalDataList(List<TotalData> list) {
     bool isEqual = true;
-    if (_totalDataList.length > 0) {
+    if (_totalDataList.isNotEmpty&&list.isNotEmpty) {
       _totalDataList.forEach((itemTotal) {
         int i = _totalDataList.indexOf(itemTotal);
         if (list[i] != itemTotal) {
           isEqual = false;
         }
       });
-    } else {
+    } else if (_totalDataList.isEmpty && list.isEmpty) {
+      isEqual = true;
+    } 
+    else {
       isEqual = false;
     }
 

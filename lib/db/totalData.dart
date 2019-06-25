@@ -25,8 +25,8 @@ class EntryData extends Equatable {
   DateTime createTime;
   bool isPacked, isDamaged, unknown;
 
-  EntryData(this.entryId, this.numId, updateTime, createTime,
-      isPacked, isDamaged, unknown)
+  EntryData(this.entryId, this.numId, updateTime, createTime, isPacked,
+      isDamaged, unknown)
       : super([
           entryId,
           updateTime,

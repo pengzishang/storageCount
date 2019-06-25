@@ -81,14 +81,19 @@ class DBSharedInstance {
     final db = await _dbFile;
     List list = await db.query("Total", orderBy: orderBy);
 
-    List<TotalData> totalLists = list.map((item) {
-      return TotalData(item["timeStampId"], item["updateTime"],
-          item["totalCount"], item["damagedCount"], item["deliverCount"]);
-    }).toList().reversed.toList();
+    List<TotalData> totalLists = list
+        .map((item) {
+          return TotalData(item["timeStampId"], item["updateTime"],
+              item["totalCount"], item["damagedCount"], item["deliverCount"]);
+        })
+        .toList()
+        .reversed
+        .toList();
     return totalLists;
   }
 
-  Future<List<EntryData>> getEntryData(String orderBy,DateTime createTime) async {
+  Future<List<EntryData>> getEntryData(
+      String orderBy, DateTime createTime) async {
     final db = await _dbFile;
     List list = await db.query("EntryDetail",
         columns: [
@@ -101,9 +106,51 @@ class DBSharedInstance {
           "unknown"
         ],
         where: "createTimeStamp = ?",
-        whereArgs: [createTime.millisecondsSinceEpoch],orderBy: orderBy);
-        return list.map((value){
-          return EntryData(value["entryId"], value["numId"], value["updateTimeStamp"], value["createTimeStamp"], value["isPacked"], value["isDamaged"], value["unknown"]);
-        }).toList().reversed.toList();
+        whereArgs: [createTime.millisecondsSinceEpoch],
+        orderBy: orderBy);
+    return list
+        .map((value) {
+          return EntryData(
+              value["entryId"],
+              value["numId"],
+              value["updateTimeStamp"],
+              value["createTimeStamp"],
+              value["isPacked"],
+              value["isDamaged"],
+              value["unknown"]);
+        })
+        .toList()
+        .reversed
+        .toList();
+  }
+
+  Future<int> setEntryData(int numId, String targetParm, bool targetValue,
+      int createTimeStamp) async {
+    final db = await _dbFile;
+    return db.transaction((action) {
+      action.update(
+          "EntryDetail",
+          {
+            targetParm: targetValue ? 1 : 0,
+            "updateTimeStamp": DateTime.now().millisecondsSinceEpoch
+          },
+          where: "numId =? AND createTimeStamp =?",
+          whereArgs: [numId, createTimeStamp]);
+    });
+  }
+
+  Future<int> setTotalData(
+      int timeId, String targetParm, int targetValue) async {
+    final db = await _dbFile;
+    return db.transaction((action) {
+      if (targetParm.length != 0) {
+        action.update("Total", {targetParm: targetValue},
+            where: "timeStampId =?", whereArgs: [timeId]);
+      }
+
+      action.update(
+          "Total", {"updateTime": DateTime.now().millisecondsSinceEpoch},
+          where: "timeStampId =?", whereArgs: [timeId]);
+    });
   }
 }

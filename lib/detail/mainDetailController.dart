@@ -5,8 +5,6 @@ import 'package:scoped_model/scoped_model.dart';
 
 class DetailHome extends StatefulWidget {
   final TotalData singleData;
-  // List<EntryData> entryList = [];
-  // EntryData _currentData;
   DetailHome(this.singleData);
 
   @override
@@ -17,51 +15,53 @@ class _DetailHomeState extends State<DetailHome> {
   int tabberIndex = 0;
   String title = '总览';
 
-  String orderBy = "numId";
-
   @override
   Widget build(BuildContext context) {
-    return DefaultTabController(
-      length: 3,
-      child: ScopedModelDescendant<MainDetailModel>(
-        rebuildOnChange: true,
-        builder: (BuildContext context, Widget child, MainDetailModel model) {
-          model.getEntryDataList(orderBy, widget.singleData.timeId);
-          return Scaffold(
-            appBar: AppBar(
-              title: Text(title),
-            ),
-            body: IndexedStack(
-              index: tabberIndex,
-              children: <Widget>[
-                BriefListView(),
-                Container(
-                  color: Colors.green,
-                ),
-                Container(color: Colors.yellow),
-              ],
-            ),
-            bottomNavigationBar: BottomNavigationBar(
-              onTap: (int i) {
-                setState(() {
-                  tabberIndex = i;
-                  title = ['总览', '异常', '表单信息'][i];
-                });
-              },
-              currentIndex: tabberIndex,
-              type: BottomNavigationBarType.fixed,
-              fixedColor: Colors.black,
-              items: [
-                BottomNavigationBarItem(
-                    icon: Icon(Icons.ac_unit), title: Text('总览')),
-                BottomNavigationBarItem(
-                    icon: Icon(Icons.ac_unit), title: Text('异常')),
-                BottomNavigationBarItem(
-                    icon: Icon(Icons.ac_unit), title: Text('表单信息')),
-              ],
-            ),
-          );
-        },
+    return ScopedModel(
+      model: MainDetailModel(),
+      child: DefaultTabController(
+        length: 3,
+        child: ScopedModelDescendant<MainDetailModel>(
+          rebuildOnChange: true,
+          builder: (BuildContext context, Widget child, MainDetailModel model) {
+            model.totalData = widget.singleData;
+            model.getEntryDataList(model.orderBy, widget.singleData.timeId);
+            return Scaffold(
+              appBar: AppBar(
+                title: Text(title),
+              ),
+              body: IndexedStack(
+                index: tabberIndex,
+                children: <Widget>[
+                  BriefListView(),
+                  Container(
+                    color: Colors.green,
+                  ),
+                  Container(color: Colors.yellow),
+                ],
+              ),
+              bottomNavigationBar: BottomNavigationBar(
+                onTap: (int i) {
+                  setState(() {
+                    tabberIndex = i;
+                    title = ['总览', '异常', '表单信息'][i];
+                  });
+                },
+                currentIndex: tabberIndex,
+                type: BottomNavigationBarType.fixed,
+                fixedColor: Colors.black,
+                items: [
+                  BottomNavigationBarItem(
+                      icon: Icon(Icons.ac_unit), title: Text('总览')),
+                  BottomNavigationBarItem(
+                      icon: Icon(Icons.ac_unit), title: Text('异常')),
+                  BottomNavigationBarItem(
+                      icon: Icon(Icons.ac_unit), title: Text('表单信息')),
+                ],
+              ),
+            );
+          },
+        ),
       ),
     );
   }
@@ -90,6 +90,7 @@ class _BriefListViewState extends State<BriefListView> {
                     onSort: (index, ac) {
                       setState(() {
                         _sortColumnIndex = index;
+                        model.orderBy = "numId";
                         model.entryList.sort((a, b) {
                           final c = a;
                           a = b;
@@ -107,6 +108,7 @@ class _BriefListViewState extends State<BriefListView> {
                     onSort: (index, ac) {
                       setState(() {
                         _sortColumnIndex = index;
+                        model.orderBy = "updateTimeStamp";
                         model.entryList.sort((a, b) {
                           final c = a;
                           a = b;
@@ -124,16 +126,12 @@ class _BriefListViewState extends State<BriefListView> {
                         ))),
                 DataColumn(
                   onSort: (index, ac) {
-                    // setState(() {
-                    //   _sortColumnIndex = index;
-                    //   widget.entryList.sort((a, b) {
-                    //     final c = a;
-                    //     a = b;
-                    //     b = c;
-                    //     return int.parse(a.isPacked.toString())
-                    //         .compareTo(int.parse(b.isPacked.toString()));
-                    //   });
-                    // });
+                    setState(() {
+                      _sortColumnIndex = index;
+                      model.orderBy = "isPacked";
+                      model.getEntryDataList(
+                          "isPacked", model.totalData.timeId);
+                    });
                   },
                   label: Container(
                       child: Text(
@@ -143,16 +141,12 @@ class _BriefListViewState extends State<BriefListView> {
                 ),
                 DataColumn(
                   onSort: (index, ac) {
-                    // setState(() {
-                    //   _sortColumnIndex = index;
-                    //   widget.entryList.sort((a, b) {
-                    //     final c = a;
-                    //     a = b;
-                    //     b = c;
-                    //     return int.parse(a.isDamaged.toString())
-                    //         .compareTo(int.parse(b.isDamaged.toString()));
-                    //   });
-                    // });
+                    setState(() {
+                      _sortColumnIndex = index;
+                      model.orderBy = "isDamaged";
+                      model.getEntryDataList(
+                          "isDamaged", model.totalData.timeId);
+                    });
                   },
                   label: Text(
                     '已损坏',
@@ -160,16 +154,11 @@ class _BriefListViewState extends State<BriefListView> {
                 ),
                 DataColumn(
                   onSort: (index, ac) {
-                    // setState(() {
-                    //   _sortColumnIndex = index;
-                    //   widget.entryList.sort((a, b) {
-                    //     final c = a;
-                    //     a = b;
-                    //     b = c;
-                    //     return int.parse(a.unknown.toString())
-                    //         .compareTo(int.parse(b.unknown.toString()));
-                    //   });
-                    // });
+                    setState(() {
+                      _sortColumnIndex = index;
+                      model.orderBy = "unknown";
+                      model.getEntryDataList("unknown", model.totalData.timeId);
+                    });
                   },
                   label: Text(
                     '未知',
@@ -177,12 +166,12 @@ class _BriefListViewState extends State<BriefListView> {
                   ),
                 ),
               ],
-              rows: model.entryList.map((EntryData value) {
+              rows: model.entryList.map((EntryData entryValue) {
                 return DataRow(
                   cells: [
                     DataCell(
                         Text(
-                          value.numId.toString(),
+                          entryValue.numId.toString(),
                           textAlign: TextAlign.center,
                         ), onTap: () {
                       Navigator.push(context,
@@ -192,20 +181,89 @@ class _BriefListViewState extends State<BriefListView> {
                       }));
                     }),
                     DataCell(Text(
-                      value.updateTime.toString(),
+                      entryValue.updateTime.toString(),
                       textAlign: TextAlign.left,
                     )),
                     DataCell(Checkbox(
-                      value: value.isPacked,
-                      onChanged: (value) {},
+                      value: entryValue.isPacked,
+                      onChanged: (value) {
+                        setState(() {
+                          entryValue.isPacked = !entryValue.isPacked;
+                          DBSharedInstance dbs = DBSharedInstance();
+                          dbs
+                              .setEntryData(
+                                  entryValue.numId,
+                                  "isPacked",
+                                  entryValue.isPacked,
+                                  entryValue.createTime.millisecondsSinceEpoch)
+                              .then((onValue) {
+                            int i = 0;
+                            model.entryList.forEach((item) {
+                              if (item.isPacked) {
+                                i++;
+                              }
+                            });
+                            dbs.setTotalData(
+                                model.totalData.timeId.millisecondsSinceEpoch,
+                                "deliverCount",
+                                i);
+                          }).then((onValue) {
+                            model.notifyListeners();
+                          });
+                        });
+                      },
                     )),
                     DataCell(Checkbox(
-                      value: value.isPacked,
-                      onChanged: (value) {},
+                      value: entryValue.isDamaged,
+                      onChanged: (value) {
+                        setState(() {
+                          entryValue.isDamaged = !entryValue.isDamaged;
+                          DBSharedInstance dbs = DBSharedInstance();
+                          dbs
+                              .setEntryData(
+                                  entryValue.numId,
+                                  "isDamaged",
+                                  entryValue.isDamaged,
+                                  entryValue.createTime.millisecondsSinceEpoch)
+                              .then((onValue) {
+                            int i = 0;
+                            model.entryList.forEach((item) {
+                              if (item.isDamaged) {
+                                i++;
+                              }
+                            });
+                            dbs.setTotalData(
+                                model.totalData.timeId.millisecondsSinceEpoch,
+                                "damagedCount",
+                                i);
+                          }).then((onValue) {
+                            model.notifyListeners();
+                          });
+                        });
+                      },
                     )),
                     DataCell(Checkbox(
-                      value: value.unknown,
-                      onChanged: (value) {},
+                      value: entryValue.unknown,
+                      onChanged: (value) {
+                        setState(() {
+                          entryValue.unknown = !entryValue.unknown;
+                          DBSharedInstance dbs = DBSharedInstance();
+                          dbs
+                              .setEntryData(
+                                  entryValue.numId,
+                                  "unknown",
+                                  entryValue.unknown,
+                                  entryValue.createTime.millisecondsSinceEpoch)
+                              .then((onValue) {
+                            dbs.setTotalData(
+                                model.totalData.timeId.millisecondsSinceEpoch,
+                                "",
+                                0);
+                          }).then((onValue) {
+                            model.notifyListeners();
+                          });
+                        });
+                      },
                     )),
                   ],
                 );
@@ -219,6 +277,8 @@ class _BriefListViewState extends State<BriefListView> {
 }
 
 class MainDetailModel extends Model {
+  String orderBy = "numId";
+  TotalData totalData;
   List<EntryData> _entryList = [];
   List<EntryData> get entryList {
     return _entryList;
@@ -230,9 +290,20 @@ class MainDetailModel extends Model {
   }
 
   set entryList(List<EntryData> list) {
-
-    
-    _entryList = list;
-    notifyListeners();
+    bool isEqual = true;
+    if (_entryList.length > 0) {
+      _entryList.forEach((itemTotal) {
+        int i = _entryList.indexOf(itemTotal);
+        if (list[i] != itemTotal) {
+          isEqual = false;
+        }
+      });
+    } else {
+      isEqual = false;
+    }
+    if (isEqual == false) {
+      _entryList = list;
+      notifyListeners();
+    }
   }
 }
