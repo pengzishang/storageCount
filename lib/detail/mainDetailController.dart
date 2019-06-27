@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:storage_count/db/db.dart';
 import 'package:storage_count/db/totalData.dart';
 import 'package:scoped_model/scoped_model.dart';
+import 'package:storage_count/detail/entryDetail.dart';
 
 class DetailHome extends StatefulWidget {
   final TotalData singleData;
@@ -176,14 +177,21 @@ class _BriefListViewState extends State<BriefListView> {
                         ), onTap: () {
                       Navigator.push(context,
                           MaterialPageRoute(builder: (context) {
-                        //todo
-                        // return DetailHome(value);
+                        return ActionControl(entryValue);
                       }));
                     }),
-                    DataCell(Text(
-                      entryValue.updateTime.toString(),
-                      textAlign: TextAlign.left,
-                    )),
+                    DataCell(
+                      Text(
+                        entryValue.updateTime.toString(),
+                        textAlign: TextAlign.left,
+                      ),
+                      onTap: () {
+                        Navigator.push(context,
+                            MaterialPageRoute(builder: (context) {
+                          return ActionControl(entryValue);
+                        }));
+                      },
+                    ),
                     DataCell(Checkbox(
                       value: entryValue.isPacked,
                       onChanged: (value) {
@@ -290,15 +298,19 @@ class MainDetailModel extends Model {
   }
 
   set entryList(List<EntryData> list) {
+    //TODO:数据比对
     bool isEqual = true;
-    if (_entryList.length > 0) {
+    if (_entryList.isNotEmpty) {
       _entryList.forEach((itemTotal) {
         int i = _entryList.indexOf(itemTotal);
         if (list[i] != itemTotal) {
           isEqual = false;
         }
       });
-    } else {
+    }else if (_entryList.isEmpty && list.isEmpty) {
+      isEqual = true;
+    } 
+     else {
       isEqual = false;
     }
     if (isEqual == false) {

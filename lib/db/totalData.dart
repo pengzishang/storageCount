@@ -43,3 +43,13 @@ class EntryData extends Equatable {
     this.unknown = unknown > 0;
   }
 }
+
+class ActionData extends Equatable {
+  int actionTimeId;
+  int numId;
+  String content;
+  int entryId;
+
+  ActionData(this.actionTimeId, this.numId, this.content, this.entryId)
+      : super([actionTimeId, numId, content, entryId]);
+}

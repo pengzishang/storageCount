@@ -153,4 +153,28 @@ class DBSharedInstance {
           where: "timeStampId =?", whereArgs: [timeId]);
     });
   }
+
+  Future<List<ActionData>> getActionData(int numId) async {
+    final db = await _dbFile;
+    List list = await db.query("ActionDetail",
+        columns: ["actionTimeId", "numId", "content", "entryId"],
+        where: "numId = ?",
+        whereArgs: [numId],
+        orderBy: "actionTimeId");
+
+    return list.map((item) {
+      return ActionData(item["actionTimeId"], item["numId"], item["content"],
+          item["entryId"]);
+    }).toList();
+  }
+
+  Future<int> addActionData(String content,int numId,int entryId) async {
+    final db = await _dbFile;
+    return db.insert("ActionDetail", {
+      "actionTimeId": DateTime.now().millisecondsSinceEpoch,
+      "content": content,
+      "numId":numId,
+      "entryId":entryId
+    });
+  }
 }
