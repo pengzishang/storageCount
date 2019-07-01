@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'detail/mainDetailController.dart';
 import 'package:storage_count/db/db.dart';
@@ -63,10 +62,11 @@ class FloatingActionBTN extends StatelessWidget {
                           int.tryParse(onValue.last))
                       .then((onValue) {
                     dbs.getTotalDataList("timeStampId").then((onValue) {
-                      model.totalDataList = onValue;
+                      model.notifyListeners();
+                      Scaffold.of(context)
+                        .hideCurrentSnackBar(reason: SnackBarClosedReason.hide);
                     });
-                    // Scaffold.of(context)
-                    //     .hideCurrentSnackBar(reason: SnackBarClosedReason.hide);
+                    
                   });
                 }
               });
@@ -304,21 +304,17 @@ class MainModel extends Model {
 
   set totalDataList(List<TotalData> list) {
     bool isEqual = true;
-    if (_totalDataList.isNotEmpty&&list.isNotEmpty) {
+    if (_totalDataList.length != list.length) {
+      isEqual = false;
+    } else {
       _totalDataList.forEach((itemTotal) {
         int i = _totalDataList.indexOf(itemTotal);
         if (list[i] != itemTotal) {
           isEqual = false;
         }
       });
-    } else if (_totalDataList.isEmpty && list.isEmpty) {
-      isEqual = true;
-    } 
-    else {
-      isEqual = false;
     }
 
-    print(isEqual);
     if (isEqual == false) {
       _totalDataList = list;
       notifyListeners();

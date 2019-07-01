@@ -92,6 +92,29 @@ class DBSharedInstance {
     return totalLists;
   }
 
+  void insertNewEntryDatas(int from, int to, DateTime createTime) async {
+    final db = await _dbFile;
+    var time = DateTime.now().millisecondsSinceEpoch;
+
+    Set newAddSet = Set.from(List.generate(to - from + 1, (index) {
+      return from + index;
+    }));
+    getEntryData("numId", createTime).then((onValue) {
+      Set numIds = onValue.map((item) {
+        return item.numId;
+      }).toSet();
+      List difference = newAddSet.difference(numIds).toList();
+      difference.forEach((item) {
+        db.insert("EntryDetail", {
+          "createTimeStamp": createTime.millisecondsSinceEpoch,
+          "updateTimeStamp": time,
+          "numId": item
+        });
+      });
+      db.update("Total", {"updateTime":time,"totalCount":newAddSet.union(numIds).length});
+    });
+  }
+
   Future<List<EntryData>> getEntryData(
       String orderBy, DateTime createTime) async {
     final db = await _dbFile;
@@ -154,27 +177,53 @@ class DBSharedInstance {
     });
   }
 
-  Future<List<ActionData>> getActionData(int numId) async {
+  Future<List<ActionData>> getActionData(int numId, int entryId) async {
     final db = await _dbFile;
     List list = await db.query("ActionDetail",
         columns: ["actionTimeId", "numId", "content", "entryId"],
-        where: "numId = ?",
-        whereArgs: [numId],
+        where: "numId = ? AND entryId = ?",
+        whereArgs: [numId, entryId],
         orderBy: "actionTimeId");
 
-    return list.map((item) {
-      return ActionData(item["actionTimeId"], item["numId"], item["content"],
-          item["entryId"]);
-    }).toList();
+    return list
+        .map((item) {
+          return ActionData(item["actionTimeId"], item["numId"],
+              item["content"], item["entryId"]);
+        })
+        .toList()
+        .reversed
+        .toList();
   }
 
-  Future<int> addActionData(String content,int numId,int entryId) async {
+  Future<int> addActionData(String content, int numId, int entryId) async {
     final db = await _dbFile;
-    return db.insert("ActionDetail", {
-      "actionTimeId": DateTime.now().millisecondsSinceEpoch,
-      "content": content,
-      "numId":numId,
-      "entryId":entryId
+    return db.transaction((action) {
+      db.insert("ActionDetail", {
+        "actionTimeId": DateTime.now().millisecondsSinceEpoch,
+        "content": content,
+        "numId": numId,
+        "entryId": entryId
+      });
+      db.update("EntryDetail",
+          {"updateTimeStamp": DateTime.now().millisecondsSinceEpoch},
+          where: "entryId = ?", whereArgs: [entryId]);
+
+      db.query("EntryDetail", where: "entryId = ?", whereArgs: [
+        entryId
+      ], columns: [
+        "entryId",
+        "updateTimeStamp",
+        "createTimeStamp",
+        "numId",
+        "isPacked",
+        "isDamaged",
+        "unknown"
+      ]).then((value) {
+        int createTimeStamp = value[0]["createTimeStamp"];
+        db.update(
+            "Total", {"updateTime": DateTime.now().millisecondsSinceEpoch},
+            where: "timeStampId = ?", whereArgs: [createTimeStamp]);
+      });
     });
   }
 }

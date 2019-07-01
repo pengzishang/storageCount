@@ -24,9 +24,11 @@ class _ActionControlState extends State<ActionControl> {
   Widget build(BuildContext context) {
     return ScopedModel(
       child: ScopedModelDescendant(
+        rebuildOnChange: false,
         builder:
             (BuildContext context, Widget child, ActionControlModel model) {
           return Scaffold(
+            backgroundColor: Colors.grey[100],
             appBar: AppBar(
               title: Text(
                 "序号: " + widget.initData.numId.toString() + "的维护信息",
@@ -39,8 +41,8 @@ class _ActionControlState extends State<ActionControl> {
                         context: context,
                         builder: (BuildContext context) => InputDialog())
                     .then((onValue) {
-                  model.insertActionData(
-                      onValue[0], model.entryData.numId, model.entryData.numId);
+                  model.insertActionData(onValue[0], model.entryData.numId,
+                      model.entryData.entryId);
                 }).then((onValue) {
                   model.notifyListeners();
                 });
@@ -76,6 +78,9 @@ class _InputDialogState extends State<InputDialog> {
   Widget build(BuildContext context) {
     return SimpleDialog(
       children: <Widget>[
+        SimpleDialogOption(
+          child: Text("输入内容",textAlign: TextAlign.center,),
+        ),
         SimpleDialogOption(
             child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -120,23 +125,63 @@ class _ActionListViewState extends State<ActionListView> {
   @override
   Widget build(BuildContext context) {
     return ScopedModelDescendant(
+      rebuildOnChange: true,
       builder: (BuildContext context, Widget child, ActionControlModel model) {
         model.getActionDataList();
-        return ListView.separated(
+        return ListView.builder(
+          shrinkWrap: false,
           itemBuilder: (context, position) {
-            Text(model.actionDatas[position].content);
-          },
-          separatorBuilder: (context, position) {
-            return Container(
-              height: 30,
-              margin: EdgeInsets.all(30),
-              padding: EdgeInsets.all(30),
-              decoration: BoxDecoration(
-                  color: Colors.grey,
-                  borderRadius: BorderRadius.circular(5),
-                  boxShadow: [
-                    BoxShadow(offset: Offset(2, 2), blurRadius: 1.0),
-                  ]),
+            return Dismissible(
+              background: new Container(color: Colors.red),
+              onDismissed: (direction) {},
+              child: Card(
+                elevation: 3,
+                margin: EdgeInsets.all(10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    Container(
+                      child: Text(
+                        "第" +
+                            (position + 1).toString() +
+                            "条: " +
+                            DateTime.fromMillisecondsSinceEpoch(
+                                    model.actionDatas[position].actionTimeId)
+                                .toString(),
+                        textAlign: TextAlign.justify,
+                        style: TextStyle(color: Colors.white),
+                      ),
+                      margin: EdgeInsets.all(10),
+                      padding: EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                          color: Colors.blueGrey,
+                          borderRadius: BorderRadius.circular(5),
+                          boxShadow: [
+                            BoxShadow(offset: Offset(2, 2), blurRadius: 3),
+                          ]),
+                    ),
+                    Container(
+                      child: Text(
+                        model.actionDatas[position].content,
+                        textAlign: TextAlign.justify,
+                      ),
+                      margin: EdgeInsets.all(10),
+                      padding: EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(5),
+                          boxShadow: [
+                            BoxShadow(
+                                offset: Offset(2, 2),
+                                blurRadius: 3,
+                                color: Colors.grey),
+                          ]),
+                    ),
+                  ],
+                ),
+              ),
+              key: Key("2323"),
             );
           },
           itemCount: model.actionDatas.length,
@@ -155,7 +200,7 @@ class ActionControlModel extends Model {
 
   Future getActionDataList() async {
     DBSharedInstance dbs = DBSharedInstance();
-    actionDatas = await dbs.getActionData(entryData.numId);
+    actionDatas = await dbs.getActionData(entryData.numId, entryData.entryId);
   }
 
   Future<int> insertActionData(String content, int numId, int entryId) async {
@@ -165,18 +210,17 @@ class ActionControlModel extends Model {
 
   set actionDatas(List<ActionData> list) {
     bool isEqual = true;
-    if (_actionDatas.isNotEmpty) {
+    if (_actionDatas.length != list.length) {
+      isEqual = false;
+    } else {
       _actionDatas.forEach((itemTotal) {
         int i = _actionDatas.indexOf(itemTotal);
         if (list[i] != itemTotal) {
           isEqual = false;
         }
       });
-    } else if (_actionDatas.isEmpty && list.isEmpty) {
-      isEqual = true;
-    } else {
-      isEqual = false;
     }
+
     if (isEqual == false) {
       _actionDatas = list;
       notifyListeners();

@@ -3,6 +3,7 @@ import 'package:storage_count/db/db.dart';
 import 'package:storage_count/db/totalData.dart';
 import 'package:scoped_model/scoped_model.dart';
 import 'package:storage_count/detail/entryDetail.dart';
+import 'package:storage_count/main.dart' as Main;
 
 class DetailHome extends StatefulWidget {
   final TotalData singleData;
@@ -21,7 +22,7 @@ class _DetailHomeState extends State<DetailHome> {
     return ScopedModel(
       model: MainDetailModel(),
       child: DefaultTabController(
-        length: 3,
+        length: 2,
         child: ScopedModelDescendant<MainDetailModel>(
           rebuildOnChange: true,
           builder: (BuildContext context, Widget child, MainDetailModel model) {
@@ -30,32 +31,54 @@ class _DetailHomeState extends State<DetailHome> {
             return Scaffold(
               appBar: AppBar(
                 title: Text(title),
+                actions: <Widget>[
+                  IconButton(
+                    icon: Icon(Icons.delete),
+                    onPressed: () {
+                      showDialog(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return InputDialog();
+                          });
+                    },
+                  )
+                ],
+              ),
+              floatingActionButton: FloatingActionButton(
+                child: Icon(Icons.add),
+                onPressed: () {
+                  showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return Main.InputDialog();
+                      }).then((onValue) {
+                    DBSharedInstance dbs = DBSharedInstance();
+                    dbs.insertNewEntryDatas(int.tryParse(onValue[0]),
+                        int.tryParse(onValue[1]), widget.singleData.timeId);
+                    model.notifyListeners();
+                  });
+                },
               ),
               body: IndexedStack(
                 index: tabberIndex,
                 children: <Widget>[
                   BriefListView(),
-                  Container(
-                    color: Colors.green,
-                  ),
                   Container(color: Colors.yellow),
                 ],
               ),
               bottomNavigationBar: BottomNavigationBar(
-                onTap: (int i) {
-                  setState(() {
-                    tabberIndex = i;
-                    title = ['总览', '异常', '表单信息'][i];
-                  });
-                },
+                // onTap: (int i) {
+                //   setState(() {
+                //     tabberIndex = i;
+                //     title = ['总览', '表单信息'][i];
+                //   });
+                // },
                 currentIndex: tabberIndex,
                 type: BottomNavigationBarType.fixed,
                 fixedColor: Colors.black,
                 items: [
                   BottomNavigationBarItem(
                       icon: Icon(Icons.ac_unit), title: Text('总览')),
-                  BottomNavigationBarItem(
-                      icon: Icon(Icons.ac_unit), title: Text('异常')),
                   BottomNavigationBarItem(
                       icon: Icon(Icons.ac_unit), title: Text('表单信息')),
                 ],
@@ -64,6 +87,17 @@ class _DetailHomeState extends State<DetailHome> {
           },
         ),
       ),
+    );
+  }
+}
+
+class InfoView extends StatelessWidget {
+  const InfoView({Key key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: <Widget>[Container()],
     );
   }
 }
@@ -298,21 +332,18 @@ class MainDetailModel extends Model {
   }
 
   set entryList(List<EntryData> list) {
-    //TODO:数据比对
     bool isEqual = true;
-    if (_entryList.isNotEmpty) {
+    if (_entryList.length != list.length) {
+      isEqual = false;
+    } else {
       _entryList.forEach((itemTotal) {
         int i = _entryList.indexOf(itemTotal);
         if (list[i] != itemTotal) {
           isEqual = false;
         }
       });
-    }else if (_entryList.isEmpty && list.isEmpty) {
-      isEqual = true;
-    } 
-     else {
-      isEqual = false;
     }
+
     if (isEqual == false) {
       _entryList = list;
       notifyListeners();
